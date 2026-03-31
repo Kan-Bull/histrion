@@ -11,6 +11,14 @@
   },
   "keywords": ["playwright", "testing", "e2e", "scaffold", "page-object-model", "typescript"],
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Kan-Bull/Prologue.git"
+  },
+  "homepage": "https://github.com/Kan-Bull/Prologue#readme",
+  "bugs": {
+    "url": "https://github.com/Kan-Bull/Prologue/issues"
+  },
   "devDependencies": {
     "@types/node": "^22.0.0",
     "@types/prompts": "^2.4.0",
