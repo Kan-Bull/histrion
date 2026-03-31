@@ -1,6 +1,6 @@
 {
   "name": "create-prologue",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Scaffold a production-grade Playwright + TypeScript project with Page Object Model architecture",
   "bin": {
     "create-prologue": "./dist/index.js"
@@ -9,7 +9,14 @@
     "build": "tsc",
     "dev": "ts-node src/index.ts"
   },
-  "keywords": ["playwright", "testing", "e2e", "scaffold", "page-object-model", "typescript"],
+  "keywords": [
+    "playwright",
+    "testing",
+    "e2e",
+    "scaffold",
+    "page-object-model",
+    "typescript"
+  ],
   "license": "MIT",
   "repository": {
     "type": "git",
