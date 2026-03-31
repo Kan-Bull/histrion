@@ -43,6 +43,7 @@ const path = __importStar(require("node:path"));
 const kleur_1 = __importDefault(require("kleur"));
 const prompts_1 = __importDefault(require("prompts"));
 const TEMPLATES_DIR = path.join(__dirname, "..", "templates");
+const DOCS_DIR = path.join(__dirname, "..", "docs");
 // ──────────────────────────────────────────────
 //  Spinner
 // ──────────────────────────────────────────────
@@ -132,6 +133,7 @@ async function main() {
         if (!config.includeCi) {
             removeDir(path.join(targetDir, ".github"));
         }
+        copyDir(DOCS_DIR, path.join(targetDir, "docs"), config);
         fs.mkdirSync(path.join(targetDir, "auth"), { recursive: true });
         fs.mkdirSync(path.join(targetDir, "reports"), { recursive: true });
         fs.mkdirSync(path.join(targetDir, "screenshots"), { recursive: true });
