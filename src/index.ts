@@ -1,0 +1,283 @@
+#!/usr/bin/env node
+
+import { execSync } from "node:child_process";
+import * as fs from "node:fs";
+import * as path from "node:path";
+import kleur from "kleur";
+import prompts from "prompts";
+
+const TEMPLATES_DIR = path.join(__dirname, "..", "templates");
+
+interface ProjectConfig {
+  projectName: string;
+  baseUrl: string;
+  includeVisual: boolean;
+  includeApi: boolean;
+  includeCi: boolean;
+}
+
+// ──────────────────────────────────────────────
+//  Spinner
+// ──────────────────────────────────────────────
+
+const FRAMES = ["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"];
+
+function spinner(message: string): { stop: (result: string) => void } {
+  let i = 0;
+  const id = setInterval(() => {
+    process.stdout.write(`\r  ${kleur.cyan(FRAMES[i++ % FRAMES.length])} ${message}`);
+  }, 80);
+
+  return {
+    stop(result: string) {
+      clearInterval(id);
+      process.stdout.write(`\r  ${result}\n`);
+    },
+  };
+}
+
+function run(cmd: string, cwd: string): void {
+  execSync(cmd, {
+    cwd,
+    stdio: "pipe",
+    env: { ...process.env, FORCE_COLOR: "0" },
+  });
+}
+
+// ──────────────────────────────────────────────
+//  Main
+// ──────────────────────────────────────────────
+
+async function main(): Promise<void> {
+  console.log();
+  console.log(
+    kleur.bold().cyan("  ⚡ create-prologue"),
+    kleur.dim("— scaffold a production-grade Playwright project"),
+  );
+  console.log();
+
+  const response = await prompts(
+    [
+      {
+        type: "text",
+        name: "projectName",
+        message: "Project name",
+        initial: "e2e-tests",
+        validate: (v: string) =>
+          /^[a-z0-9-]+$/.test(v) ? true : "Use lowercase letters, numbers, and hyphens only",
+      },
+      {
+        type: "text",
+        name: "baseUrl",
+        message: "Application base URL",
+        initial: "http://localhost:3000",
+      },
+      {
+        type: "confirm",
+        name: "includeVisual",
+        message: "Include visual regression tests?",
+        initial: true,
+      },
+      {
+        type: "confirm",
+        name: "includeApi",
+        message: "Include API helpers for setup/teardown?",
+        initial: true,
+      },
+      {
+        type: "confirm",
+        name: "includeCi",
+        message: "Include GitHub Actions CI/CD?",
+        initial: true,
+      },
+    ],
+    { onCancel: () => process.exit(1) },
+  );
+
+  const config = response as ProjectConfig;
+  const targetDir = path.resolve(process.cwd(), config.projectName);
+
+  if (fs.existsSync(targetDir)) {
+    console.log(kleur.red(`\n  ✗ Directory "${config.projectName}" already exists.\n`));
+    process.exit(1);
+  }
+
+  console.log();
+
+  // ── Step 1: Scaffold files ──
+  const s1 = spinner("Scaffolding project structure...");
+  try {
+    copyDir(TEMPLATES_DIR, targetDir, config);
+
+    const tmplPath = path.join(targetDir, "package.json.tmpl");
+    const pkgPath = path.join(targetDir, "package.json");
+    if (fs.existsSync(tmplPath)) {
+      fs.renameSync(tmplPath, pkgPath);
+    }
+
+    if (!config.includeVisual) {
+      removeDir(path.join(targetDir, "tests", "visual"));
+      removeFile(path.join(targetDir, "src", "utils", "visual.ts"));
+    }
+    if (!config.includeApi) {
+      removeDir(path.join(targetDir, "src", "api"));
+    }
+    if (!config.includeCi) {
+      removeDir(path.join(targetDir, ".github"));
+    }
+
+    fs.mkdirSync(path.join(targetDir, "auth"), { recursive: true });
+    fs.mkdirSync(path.join(targetDir, "reports"), { recursive: true });
+    fs.mkdirSync(path.join(targetDir, "screenshots"), { recursive: true });
+
+    const envExample = path.join(targetDir, ".env.example");
+    const envFile = path.join(targetDir, ".env");
+    if (fs.existsSync(envExample)) {
+      fs.copyFileSync(envExample, envFile);
+    }
+
+    const fileCount = countFiles(targetDir);
+    s1.stop(kleur.green(`✓ Scaffolded ${fileCount} files`));
+  } catch (err) {
+    s1.stop(kleur.red("✗ Scaffold failed"));
+    throw err;
+  }
+
+  // ── Step 2: npm install ──
+  const s2 = spinner("Installing dependencies (npm install)...");
+  try {
+    run("npm install", targetDir);
+    s2.stop(kleur.green("✓ Dependencies installed"));
+  } catch (err) {
+    s2.stop(kleur.red("✗ npm install failed"));
+    console.log(kleur.dim("\n  You can retry manually:"));
+    console.log(`    cd ${config.projectName}`);
+    console.log("    npm install\n");
+    throw err;
+  }
+
+  // ── Step 3: Playwright browsers ──
+  const s3 = spinner("Installing Playwright browsers (this may take a minute)...");
+  try {
+    run("npx playwright install --with-deps chromium", targetDir);
+    s3.stop(kleur.green("✓ Playwright browsers installed"));
+  } catch (err) {
+    s3.stop(kleur.yellow("⚠ Playwright install failed (you can retry manually)"));
+    console.log(kleur.dim(`    cd ${config.projectName}`));
+    console.log(kleur.dim("    npx playwright install --with-deps chromium\n"));
+  }
+
+  // ── Step 4: Lint check ──
+  const s4 = spinner("Verifying code quality (biome check)...");
+  try {
+    run("npx @biomejs/biome check .", targetDir);
+    s4.stop(kleur.green("✓ All files pass lint & format"));
+  } catch {
+    s4.stop(kleur.yellow("⚠ Some lint issues found (run npm run lint:fix)"));
+  }
+
+  // ── Step 5: Git init ──
+  const s5 = spinner("Initializing git repository...");
+  try {
+    run("git init", targetDir);
+    run("git add -A", targetDir);
+    run('git commit -m "Initial scaffold via create-prologue"', targetDir);
+    s5.stop(kleur.green("✓ Git repository initialized with first commit"));
+  } catch {
+    s5.stop(kleur.yellow("⚠ Git init skipped (git not available)"));
+  }
+
+  // ── Done ──
+  console.log();
+  console.log(kleur.bold().green("  ✓ Project ready!\n"));
+
+  console.log(kleur.bold("  Get started:\n"));
+  console.log(`    cd ${config.projectName}`);
+  console.log("    code .                    # open in VS Code");
+  console.log("");
+  console.log(kleur.bold("  Run tests:\n"));
+  console.log("    npm test                  # all tests");
+  console.log("    npm run test:smoke        # smoke tests only");
+  console.log("    npm run test:ui           # Playwright UI mode");
+  console.log("    npm run test:debug        # step-by-step debugger");
+  console.log("");
+  console.log(kleur.bold("  Code quality:\n"));
+  console.log("    npm run lint              # check with Biome");
+  console.log("    npm run lint:fix          # auto-fix issues");
+  console.log("");
+
+  printStructure(config);
+}
+
+// ──────────────────────────────────────────────
+//  Helpers
+// ──────────────────────────────────────────────
+
+function copyDir(src: string, dest: string, config: ProjectConfig): void {
+  fs.mkdirSync(dest, { recursive: true });
+
+  for (const entry of fs.readdirSync(src, { withFileTypes: true })) {
+    const srcPath = path.join(src, entry.name);
+    const destPath = path.join(dest, entry.name);
+
+    if (entry.isDirectory()) {
+      copyDir(srcPath, destPath, config);
+    } else {
+      let content = fs.readFileSync(srcPath, "utf-8");
+      content = content.replace(/\{\{projectName\}\}/g, config.projectName);
+      content = content.replace(/http:\/\/localhost:3000/g, config.baseUrl);
+      fs.writeFileSync(destPath, content);
+    }
+  }
+}
+
+function removeDir(dirPath: string): void {
+  if (fs.existsSync(dirPath)) {
+    fs.rmSync(dirPath, { recursive: true });
+  }
+}
+
+function removeFile(filePath: string): void {
+  if (fs.existsSync(filePath)) {
+    fs.unlinkSync(filePath);
+  }
+}
+
+function countFiles(dir: string): number {
+  let count = 0;
+  for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+    if (entry.name === "node_modules") continue;
+    if (entry.isDirectory()) {
+      count += countFiles(path.join(dir, entry.name));
+    } else {
+      count++;
+    }
+  }
+  return count;
+}
+
+function printStructure(config: ProjectConfig): void {
+  console.log(kleur.dim("  Project structure:\n"));
+  const lines = [
+    "  src/",
+    "  ├── core/            Base classes (BasePage, BaseComponent, BaseAPI)",
+    "  ├── components/      Reusable UI components (Table, Modal, Form...)",
+    "  ├── pages/           Page Objects (one per page)",
+    "  ├── fixtures/        Playwright fixture injection",
+    config.includeApi ? "  ├── api/             API clients for setup/teardown" : null,
+    "  ├── data/            Builders & types for test data",
+    "  ├── config/          Environment & user configuration",
+    "  ├── reporters/       Custom HTML reporter",
+    "  └── utils/           Logger, custom matchers, visual helpers",
+    "  tests/",
+    "  ├── e2e/             End-to-end specs",
+    config.includeVisual ? "  └── visual/          Visual regression specs" : null,
+  ].filter(Boolean);
+
+  for (const line of lines) {
+    console.log(line);
+  }
+  console.log();
+}
+
+main().catch(console.error);

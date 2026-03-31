@@ -1,0 +1,32 @@
+# Local documentation (scaffolded reference — not committed)
+docs/
+
+# Dependencies
+node_modules/
+
+# Build
+dist/
+
+# Playwright
+test-results/
+reports/
+auth/
+screenshots/
+blob-report/
+
+# Visual regression snapshots (track these in git)
+# !tests/**/*.png
+
+# Environment
+.env
+.env.local
+.env.dev
+.env.staging
+.env.production
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
