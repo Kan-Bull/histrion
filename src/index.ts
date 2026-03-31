@@ -7,6 +7,7 @@ import kleur from "kleur";
 import prompts from "prompts";
 
 const TEMPLATES_DIR = path.join(__dirname, "..", "templates");
+const DOCS_DIR = path.join(__dirname, "..", "docs");
 
 interface ProjectConfig {
   projectName: string;
@@ -125,6 +126,8 @@ async function main(): Promise<void> {
     if (!config.includeCi) {
       removeDir(path.join(targetDir, ".github"));
     }
+
+    copyDir(DOCS_DIR, path.join(targetDir, "docs"), config);
 
     fs.mkdirSync(path.join(targetDir, "auth"), { recursive: true });
     fs.mkdirSync(path.join(targetDir, "reports"), { recursive: true });
