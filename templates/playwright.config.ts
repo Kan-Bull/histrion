@@ -22,7 +22,7 @@ export default defineConfig({
   timeout: EnvConfig.timeout,
   forbidOnly: !!process.env.CI,
 
-  /* Global setup: authenticates test users and caches state */
+  /* Global setup: creates required directories */
   globalSetup: require.resolve("./global-setup"),
 
   /* Expectations */
@@ -37,12 +37,16 @@ export default defineConfig({
   reporter: [
     ["list"],
     ["html", { open: "never", outputFolder: "reports/playwright-html" }],
-    ["./src/reporters/html-report.ts", { outputFile: "reports/custom-report.html" }],
+    [
+      "./src/reporters/html-report.ts",
+      { open: "on-failure", outputFile: "reports/custom-report.html" },
+    ],
   ],
 
   /* Shared settings for all projects */
   use: {
     baseURL: EnvConfig.baseUrl,
+    testIdAttribute: "data-test",
     headless: EnvConfig.headless,
 
     /* Traces & evidence */
@@ -62,45 +66,45 @@ export default defineConfig({
   },
 
   projects: [
-    // ── E2E tests: authenticated as admin ──
+    // -- E2E tests: authenticated as admin --
     {
       name: "e2e-admin",
       testDir: "./tests/e2e",
       use: {
         ...devices["Desktop Chrome"],
-        storageState: "auth/admin.json",
+        // storageState: "auth/admin.json",
       },
     },
 
-    // ── E2E tests: authenticated as standard user ──
+    // -- E2E tests: authenticated as standard user --
     {
       name: "e2e-user",
       testDir: "./tests/e2e",
       grep: /@user/,
       use: {
         ...devices["Desktop Chrome"],
-        storageState: "auth/standard.json",
+        // storageState: "auth/standard.json",
       },
     },
 
-    // ── Visual regression ──
+    // -- Visual regression --
     {
       name: "visual",
       testDir: "./tests/visual",
       use: {
         ...devices["Desktop Chrome"],
-        storageState: "auth/admin.json",
+        // storageState: "auth/admin.json",
       },
     },
 
-    // ── Mobile viewport ──
+    // -- Mobile viewport --
     {
       name: "mobile",
       testDir: "./tests/e2e",
       grep: /@mobile/,
       use: {
         ...devices["iPhone 14"],
-        storageState: "auth/standard.json",
+        // storageState: "auth/standard.json",
       },
     },
   ],

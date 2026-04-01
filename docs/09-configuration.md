@@ -7,7 +7,7 @@ Four environments are defined in `src/config/env.config.ts`:
 
 | Environment | Base URL | Timeout | Retries | Workers | Headless |
 |-------------|----------|---------|---------|---------|----------|
-| `local` | `http://localhost:3000` | 15s | 0 | 4 | No |
+| `local` | `https://practicesoftwaretesting.com` | 15s | 0 | 4 | No |
 | `dev` | `https://dev.example.com` | 30s | 1 | 4 | Yes |
 | `staging` | `https://staging.example.com` | 30s | 2 | 2 | Yes |
 | `production` | `https://app.example.com` | 60s | 2 | 1 | Yes |
@@ -135,6 +135,9 @@ await authenticateUser(browser, users.standard, 'auth/standard.json');
 > `auth/*.json` contains session tokens and should never be committed. They're regenerated on each run.
 
 ### Customizing the login flow
+
+> [!note] Auth is commented out by default
+> The scaffolded project targets `practicesoftwaretesting.com`, which does not require authentication for the contact form. The auth setup in `global-setup.ts` is commented out by default. Uncomment and customize it when you point the project at your own application.
 
 If your app uses a different login mechanism (SSO, OAuth, magic link), edit `global-setup.ts`. The pattern stays the same:
 

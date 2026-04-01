@@ -64,10 +64,9 @@ See [[04-components]] for details.
 One Page Object per page of your application. Pages compose Components and expose semantic methods.
 
 ```typescript
-// DashboardPage composes TableComponent, ModalComponent, ToastComponent
-readonly dataTable = new TableComponent(this.page, this.page.getByTestId('data-table'));
-readonly confirmModal = new ModalComponent(this.page, this.page.getByTestId('confirm-modal'));
-readonly toast = new ToastComponent(this.page, this.page.getByTestId('toast'));
+// ContactPage extends BasePage, uses Logger
+readonly path = '/contact';
+readonly pageTitle = /Contact/;
 ```
 
 See [[03-page-objects]] for details.
@@ -77,8 +76,8 @@ See [[03-page-objects]] for details.
 The bridge between Page Objects and tests. Each fixture instantiates a Page Object and injects it into the test function.
 
 ```typescript
-loginPage: async ({ page }, use) => {
-  await use(new LoginPage(page));
+contactPage: async ({ page }, use) => {
+  await use(new ContactPage(page));
 },
 ```
 
@@ -89,9 +88,11 @@ See [[05-fixtures]] for details.
 Test specs that read like specifications. They use fixtures to get Page Objects and call semantic methods.
 
 ```typescript
-test('should login successfully', async ({ loginPage, dashboardPage }) => {
-  await loginPage.loginAs(users.admin);
-  await dashboardPage.expectToBeVisible();
+test('user can submit a contact form', async ({ contactPage }) => {
+  await contactPage.navigate();
+  await contactPage.fillContactForm(ContactBuilder.create().build());
+  await contactPage.submitForm();
+  await contactPage.expectSuccessMessage();
 });
 ```
 

@@ -6,36 +6,38 @@ Hardcoded test data is brittle and repetitive:
 
 ```typescript
 // Bad — duplicated, fragile, hard to maintain
-test('admin can delete user', async ({ adminPage }) => {
-  const user = {
-    email: 'test@example.com',
+test('can submit contact form', async ({ contactPage }) => {
+  const formData = {
     firstName: 'Test',
     lastName: 'User',
-    role: 'user',
+    email: 'test@example.com',
+    subject: 'customer-service',
+    message: 'I need help with my order',
   };
   // ...
 });
 
-test('admin can promote user', async ({ adminPage }) => {
-  const user = {
-    email: 'test2@example.com',
+test('can submit another contact form', async ({ contactPage }) => {
+  const formData = {
     firstName: 'Test2',
     lastName: 'User2',
-    role: 'user',
+    email: 'test2@example.com',
+    subject: 'webmaster',
+    message: 'The website is broken',
   };
   // ...
 });
 ```
 
-When the `User` type changes (new required field, renamed property), every test breaks.
+When the `ContactFormData` type changes (new required field, renamed property), every test breaks.
 
 ## The solution: Builders
 
 Builders centralize defaults and expose a fluent API for overrides:
 
 ```typescript
-const user = UserBuilder.create()
-  .withRole('admin')
+const contact = ContactBuilder.create()
+  .withSubject('customer-service')
   .withEmail('admin@test.com')
   .build();
 ```
@@ -147,31 +149,17 @@ const products = ProductBuilder.create().buildMany(5, (i) => ({
 > [!tip] The override function receives the index
 > Use it for unique values: emails, names, sequential IDs.
 
-## Convenience static methods
+## Faker.js integration
 
-For common patterns, add static methods that skip the chain:
-
-```typescript
-export class UserBuilder extends Builder<User> {
-  // ...builder methods...
-
-  /** Build a user with a unique email based on index */
-  static indexed(index: number): User {
-    return UserBuilder.create()
-      .withEmail(`user-${index}@test.com`)
-      .withFirstName('User')
-      .withLastName(`${index}`)
-      .build();
-  }
-}
-```
-
-Usage:
+Builders use [Faker.js](https://fakerjs.dev/) to generate realistic test data by default. This means every call to `ContactBuilder.create().build()` produces unique, realistic values — no more `test@example.com` everywhere:
 
 ```typescript
-const user = UserBuilder.indexed(42);
-// { email: 'user-42@test.com', firstName: 'User', lastName: '42', role: 'user' }
+const contact = ContactBuilder.create().build();
+// { firstName: 'Alexis', lastName: 'Mertz', email: 'alexis.mertz@yahoo.com',
+//   subject: 'customer-service', message: 'Lorem ipsum dolor sit amet...' }
 ```
+
+Override only the fields that matter for your test, and let Faker handle the rest.
 
 ## What Builder\<T\> gives you
 

@@ -8,31 +8,25 @@ The file `src/fixtures/index.ts` defines custom fixtures that extend Playwright'
 
 ```typescript
 import { test as base } from '@playwright/test';
-import { DashboardPage } from '../pages/dashboard.page';
-import { LoginPage } from '../pages/login.page';
+import { ContactPage } from '../pages/contact.page';
 
 type TestFixtures = {
-  loginPage: LoginPage;
-  dashboardPage: DashboardPage;
+  contactPage: ContactPage;
 };
 
 export const test = base.extend<TestFixtures>({
-  loginPage: async ({ page }, use) => {
-    await use(new LoginPage(page));
-  },
-
-  dashboardPage: async ({ page }, use) => {
-    await use(new DashboardPage(page));
+  contactPage: async ({ page }, use) => {
+    await use(new ContactPage(page));
   },
 });
 
 export { expect } from '../utils/custom-matchers';
 ```
 
-When a test declares `async ({ loginPage }) =>`, Playwright:
+When a test declares `async ({ contactPage }) =>`, Playwright:
 1. Creates a fresh `page` (browser tab)
-2. Passes it to the `loginPage` fixture function
-3. Constructs `new LoginPage(page)`
+2. Passes it to the `contactPage` fixture function
+3. Constructs `new ContactPage(page)`
 4. Injects the instance into your test via `use()`
 5. After the test, tears everything down
 
@@ -46,8 +40,7 @@ import { SettingsPage } from '../pages/settings.page';
 
 // 2. Add to the type
 type TestFixtures = {
-  loginPage: LoginPage;
-  dashboardPage: DashboardPage;
+  contactPage: ContactPage;
   settingsPage: SettingsPage;  // ← add
 };
 
@@ -71,20 +64,20 @@ test('can change settings', async ({ settingsPage }) => {
 Sometimes you want a fixture that does setup work before the test runs — like navigating to a page or logging in:
 
 ```typescript
-dashboardPage: async ({ page }, use) => {
-  const dashboard = new DashboardPage(page);
-  await dashboard.navigate();        // pre-navigate
-  await dashboard.waitForPageReady(); // wait for data to load
-  await use(dashboard);              // test starts here
+contactPage: async ({ page }, use) => {
+  const contact = new ContactPage(page);
+  await contact.navigate();          // pre-navigate
+  await contact.waitForPageReady();  // wait for page to load
+  await use(contact);                // test starts here
 },
 ```
 
-The test receives a `dashboardPage` that's already on the dashboard:
+The test receives a `contactPage` that's already on the contact page:
 
 ```typescript
-test('dashboard shows data', async ({ dashboardPage }) => {
+test('contact form is ready', async ({ contactPage }) => {
   // Already navigated — go straight to assertions
-  await dashboardPage.dataTable.expectToBeVisible();
+  await contactPage.expectSuccessMessage();
 });
 ```
 
@@ -93,14 +86,14 @@ test('dashboard shows data', async ({ dashboardPage }) => {
 
 ## Lazy fixtures
 
-Playwright only runs fixtures that the test actually requests. If a test only needs `loginPage`, the `dashboardPage` fixture is never created. No wasted work.
+Playwright only runs fixtures that the test actually requests. If a test only needs `contactPage`, other fixtures are never created. No wasted work.
 
 ```typescript
-// Only loginPage is instantiated — dashboardPage is skipped
-test('login shows error', async ({ loginPage }) => {
-  await loginPage.navigate();
-  await loginPage.attemptLogin({ username: 'bad', password: 'bad' });
-  await loginPage.expectErrorMessage(/Invalid credentials/);
+// Only contactPage is instantiated — other fixtures are skipped
+test('contact form shows validation errors', async ({ contactPage }) => {
+  await contactPage.navigate();
+  await contactPage.submitForm();
+  await contactPage.expectValidationErrors();
 });
 ```
 
@@ -110,11 +103,11 @@ The code after `await use()` runs as cleanup, even if the test fails:
 
 ```typescript
 apiClient: async ({}, use) => {
-  const api = new UserAPI();
-  const user = await api.createUser(UserBuilder.create().build());
+  const api = new ContactAPI();
+  const contact = await api.createContact(ContactBuilder.create().build());
   await use(api);
   // Cleanup: runs after test completes (pass or fail)
-  await api.deleteUser(user.id);
+  await api.deleteContact(contact.id);
   await api.dispose();
 },
 ```
@@ -126,9 +119,9 @@ This is how you guarantee teardown. See [[07-api-helpers]] for more on API fixtu
 Fixtures can depend on other fixtures:
 
 ```typescript
-authenticatedDashboard: async ({ loginPage, dashboardPage }, use) => {
-  await loginPage.loginAs(users.admin);
-  await use(dashboardPage);
+preparedContactPage: async ({ contactPage }, use) => {
+  await contactPage.navigate();
+  await use(contactPage);
 },
 ```
 

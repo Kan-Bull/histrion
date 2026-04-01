@@ -90,8 +90,7 @@ import { SettingsPage } from '../pages/settings.page';
 
 // 1. Add to the type
 type TestFixtures = {
-  loginPage: LoginPage;
-  dashboardPage: DashboardPage;
+  contactPage: ContactPage;
   settingsPage: SettingsPage;  // ← add
 };
 

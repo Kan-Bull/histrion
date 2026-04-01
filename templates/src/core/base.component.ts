@@ -12,7 +12,7 @@ import { Logger } from "../utils/logger";
  *
  * Usage in a Page Object:
  * ```ts
- * class DashboardPage extends BasePage {
+ * class MyPage extends BasePage {
  *   readonly dataTable = new TableComponent(this.page, this.page.locator('[data-testid="main-table"]'));
  *   readonly toast = new ToastComponent(this.page, this.page.locator('[role="alert"]'));
  * }

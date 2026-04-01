@@ -19,6 +19,23 @@ export interface LoginCredentials {
   password: string;
 }
 
+// Contact dropdown values as a type for better maintainability
+export type ContactSubject =
+  | "customer-service"
+  | "webmaster"
+  | "return"
+  | "payments"
+  | "warranty"
+  | "status-of-order";
+
+export interface ContactFormData {
+  firstName: string;
+  lastName: string;
+  email: string;
+  subject: ContactSubject;
+  message: string;
+}
+
 /**
  * Add your domain-specific types below.
  *

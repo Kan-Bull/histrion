@@ -1,6 +1,5 @@
 import { test as base } from "@playwright/test";
-import { DashboardPage } from "../pages/dashboard.page";
-import { LoginPage } from "../pages/login.page";
+import { ContactPage } from "../pages/contact.page";
 
 /**
  * Custom test fixtures extending Playwright's base test.
@@ -13,9 +12,16 @@ import { LoginPage } from "../pages/login.page";
  * ```ts
  * import { test, expect } from '../src/fixtures';
  *
- * test('user can login', async ({ loginPage, dashboardPage }) => {
- *   await loginPage.loginAs(users.admin);
- *   await dashboardPage.expectToBeVisible();
+ * test('user can contact support', async ({ contactPage }) => {
+ *   await contactPage.fillContactForm({
+ *     firstName: 'John',
+ *     lastName: 'Doe',
+ *     email: 'john.doe@example.com',
+ *     subject: 'customer-service',
+ *     message: 'I need help with my account.'
+ *   });
+ *   await contactPage.submitForm();
+ *   await contactPage.expectSuccessMessage();
  * });
  * ```
  *
@@ -26,17 +32,12 @@ import { LoginPage } from "../pages/login.page";
  */
 
 type TestFixtures = {
-  loginPage: LoginPage;
-  dashboardPage: DashboardPage;
+  contactPage: ContactPage;
 };
 
 export const test = base.extend<TestFixtures>({
-  loginPage: async ({ page }, use) => {
-    await use(new LoginPage(page));
-  },
-
-  dashboardPage: async ({ page }, use) => {
-    await use(new DashboardPage(page));
+  contactPage: async ({ page }, use) => {
+    await use(new ContactPage(page));
   },
 });
 

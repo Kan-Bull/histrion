@@ -5,18 +5,19 @@
 >
 > ```typescript
 > // Good : reads like a spec
-> test('admin can approve a pending application', async ({ dashboardPage }) => {
->   await dashboardPage.navigateTo('applications');
->   await dashboardPage.applications.filterByStatus('pending');
->   await dashboardPage.applications.approve(0);
->   await dashboardPage.toast.expectSuccess('Application approved');
+> test('user can submit a contact form', async ({ contactPage }) => {
+>   await contactPage.navigate();
+>   await contactPage.fillContactForm(ContactBuilder.create().build());
+>   await contactPage.submitForm();
+>   await contactPage.expectSuccessMessage();
 > });
 >
 > // Bad : implementation details leaked into the test
-> test('admin can approve', async ({ page }) => {
->   await page.click('[data-testid="nav-applications"]');
->   await page.selectOption('#status-filter', 'pending');
->   await page.click('.approve-btn');
+> test('user can submit a contact form', async ({ page }) => {
+>   await page.fill('#first_name', 'John');
+>   await page.fill('#last_name', 'Doe');
+>   await page.fill('#email', 'john@example.com');
+>   await page.click('.btnSubmit');
 > });
 > ```
 >

@@ -116,11 +116,12 @@ The framework ships with 4 Components ready to use:
 Data grid interactions: row reading, sorting, row actions, assertions.
 
 ```typescript
-await dashboardPage.dataTable.getRowCount();
-await dashboardPage.dataTable.sortByColumn('Name');
-await dashboardPage.dataTable.clickRowAction(0, 'action-delete');
-await dashboardPage.dataTable.expectRowCount(5);
-await dashboardPage.dataTable.expectRowContains(0, 'quarterly report');
+// In a page that composes a TableComponent:
+await myPage.dataTable.getRowCount();
+await myPage.dataTable.sortByColumn('Name');
+await myPage.dataTable.clickRowAction(0, 'action-delete');
+await myPage.dataTable.expectRowCount(5);
+await myPage.dataTable.expectRowContains(0, 'quarterly report');
 ```
 
 ### ModalComponent
@@ -128,9 +129,10 @@ await dashboardPage.dataTable.expectRowContains(0, 'quarterly report');
 Dialog interactions: wait, confirm, cancel, read content.
 
 ```typescript
-await dashboardPage.confirmModal.waitForVisible();
-await dashboardPage.confirmModal.confirm();
-await dashboardPage.confirmModal.expectToBeHidden();
+// In a page that composes a ModalComponent:
+await myPage.confirmModal.waitForVisible();
+await myPage.confirmModal.confirm();
+await myPage.confirmModal.expectToBeHidden();
 ```
 
 ### FormComponent
@@ -142,9 +144,10 @@ Form interactions: fill fields, submit, reset, read validation errors.
 Notification interactions: read message, dismiss, assert type.
 
 ```typescript
-await dashboardPage.toast.expectSuccess('Saved!');
-await dashboardPage.toast.expectError(/failed/);
-await dashboardPage.toast.dismiss();
+// In a page that composes a ToastComponent:
+await myPage.toast.expectSuccess('Saved!');
+await myPage.toast.expectError(/failed/);
+await myPage.toast.dismiss();
 ```
 
 ## What BaseComponent gives you

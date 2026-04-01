@@ -15,21 +15,22 @@
 
 ## What you get
 
-Run one command. Answer 5 questions. Get a fully configured project with:
+Run one command. Answer a few questions. Get a fully configured project with:
 
 - **Page Object Model architecture** — 7-layer separation of concerns
 - **Reusable components** — Table, Modal, Form, Toast out of the box
 - **Type-safe fixtures** — Page Objects injected into tests automatically
-- **Fluent data builders** — `UserBuilder.create().withRole('admin').build()`
+- **Fluent data builders** — `ContactBuilder.create().withSubject('customer-service').build()`
+- **Faker.js integration** — generate realistic random test data (optional)
 - **API helpers** — setup/teardown without touching the UI
 - **Visual regression** — screenshot comparison with smart masking
-- **Custom HTML reporter** — dark-mode, filterable, tag-aware
-- **Auth state caching** — login once, reuse across all tests
-- **Structured logger** — every action traced with timestamps
+- **Custom HTML reporter** — dark-mode, filterable, tag-aware, auto-open on failure
+- **Structured logger** — every action traced with color-coded timestamps
 - **Custom expect matchers** — domain-specific assertions
 - **Biome** — linting + formatting, zero config
 - **GitHub Actions** — CI/CD with matrix strategy, manual dispatch
 - **13 documentation guides** — from getting started to best practices
+- **Working examples** — Contact page tests against [practicesoftwaretesting.com](https://practicesoftwaretesting.com)
 
 ## Quick start
 
@@ -43,7 +44,9 @@ That's it. The CLI scaffolds the project, installs dependencies, downloads Playw
   ⚡ create-prologue — scaffold a production-grade Playwright project
 
   - Project name: my-e2e-tests
-  - Application base URL: https://staging.example.com
+  - Application base URL: https://practicesoftwaretesting.com
+  - Include example files? Yes
+  - Install Faker.js? Yes
   - Include visual regression tests? Yes
   - Include API helpers for setup/teardown? Yes
   - Include GitHub Actions CI/CD? Yes
@@ -67,11 +70,11 @@ That's it. The CLI scaffolds the project, installs dependencies, downloads Playw
 > **Tests never contain selectors.** They read like specifications.
 
 ```typescript
-test('admin can approve a pending application', async ({ dashboardPage }) => {
-  await dashboardPage.navigateTo('applications');
-  await dashboardPage.applications.filterByStatus('pending');
-  await dashboardPage.applications.approve(0);
-  await dashboardPage.toast.expectSuccess('Application approved');
+test('user can submit a contact form', async ({ contactPage }) => {
+  await contactPage.navigate();
+  await contactPage.fillContactForm(ContactBuilder.create().build());
+  await contactPage.submitForm();
+  await contactPage.expectSuccessMessage();
 });
 ```
 
@@ -87,7 +90,7 @@ src/
 ├── fixtures/       Type-safe dependency injection into tests
 ├── api/            HTTP clients for test setup/teardown
 ├── data/
-│   ├── builders/   Fluent test data builders
+│   ├── builders/   Fluent test data builders (with Faker.js)
 │   └── types/      Domain types
 ├── config/         Environment & user configuration
 ├── reporters/      Custom HTML reporter
@@ -101,6 +104,15 @@ docs/               Local-only documentation (13 guides, gitignored)
 ```
 
 Dependencies flow **down** only. Tests → Fixtures → Pages → Components → Core → Config.
+
+## Example tests
+
+The scaffolded project includes working tests against [practicesoftwaretesting.com](https://practicesoftwaretesting.com):
+
+- **Contact form submission** — valid data, random data (via Faker), validation errors
+- **Visual regression** — full-page screenshot comparison
+
+These examples demonstrate the full framework: Page Objects, fixtures, data builders, and structured logging. Run them immediately after scaffolding.
 
 ## Available scripts
 

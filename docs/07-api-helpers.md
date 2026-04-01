@@ -73,21 +73,21 @@ For per-test data that needs cleanup, use fixtures with the `await use()` patter
 
 ```typescript
 // In src/fixtures/index.ts
-import { UserAPI } from '../api/user.api';
-import { UserBuilder } from '../data/builders/user.builder';
+import { ContactAPI } from '../api/contact.api';
+import { ContactBuilder } from '../data/builders/contact.builder';
 
-testUser: async ({}, use) => {
-  const api = new UserAPI();
+testContact: async ({}, use) => {
+  const api = new ContactAPI();
 
-  // Setup: create user before test
-  const user = await api.createUser(
-    UserBuilder.create().withRole('user').build()
+  // Setup: create contact before test
+  const contact = await api.createContact(
+    ContactBuilder.create().withSubject('Support Request').build()
   );
 
-  await use(user);
+  await use(contact);
 
-  // Cleanup: delete user after test (runs even on failure)
-  await api.deleteUser(user.id);
+  // Cleanup: delete contact after test (runs even on failure)
+  await api.deleteContact(contact.id);
   await api.dispose();
 },
 ```
@@ -98,11 +98,11 @@ testUser: async ({}, use) => {
 In the test:
 
 ```typescript
-test('user can update profile', async ({ settingsPage, testUser }) => {
-  // testUser was created via API, no UI interaction needed
-  await settingsPage.navigate();
-  await settingsPage.updateName(testUser.firstName);
-  await settingsPage.expectSaveSuccess();
+test('submitted contact appears in admin view', async ({ adminPage, testContact }) => {
+  // testContact was created via API, no UI interaction needed
+  await adminPage.navigate();
+  await adminPage.searchContacts(testContact.subject);
+  await adminPage.expectContactVisible(testContact.subject);
 });
 ```
 

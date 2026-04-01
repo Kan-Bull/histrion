@@ -1,5 +1,7 @@
 import * as fs from "node:fs";
 import * as path from "node:path";
+import * as os from "node:os";
+import { execSync } from "node:child_process";
 import type {
   FullConfig,
   FullResult,
@@ -28,11 +30,15 @@ interface TestEntry {
  * - Tag-based grouping
  * - Duration tracking
  * - Error details for failed tests
+ * - Auto-open in browser (configurable)
  *
  * Configuration in playwright.config.ts:
  * ```ts
  * reporter: [
- *   ['./src/reporters/html-report.ts', { outputFile: 'reports/results.html' }],
+ *   ['./src/reporters/html-report.ts', {
+ *     outputFile: 'reports/results.html',
+ *     open: 'on-failure', // 'always' | 'never' | 'on-failure'
+ *   }],
  * ],
  * ```
  */
@@ -40,9 +46,16 @@ class CustomHTMLReporter implements Reporter {
   private results: TestEntry[] = [];
   private startTime = 0;
   private outputFile: string;
+  private openBehavior: "always" | "on-failure" | "never";
 
-  constructor(options: { outputFile?: string } = {}) {
+  constructor(
+    options: {
+      outputFile?: string;
+      open?: "always" | "never" | "on-failure";
+    } = {},
+  ) {
     this.outputFile = options.outputFile ?? "reports/test-report.html";
+    this.openBehavior = options.open ?? "never";
   }
 
   onBegin(_config: FullConfig, _suite: Suite): void {
@@ -83,6 +96,21 @@ class CustomHTMLReporter implements Reporter {
     const dir = path.dirname(this.outputFile);
     if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
     fs.writeFileSync(this.outputFile, html);
+
+    // Auto-open in browser
+    if (
+      this.openBehavior === "always" ||
+      (this.openBehavior === "on-failure" && result.status !== "passed")
+    ) {
+      const fullPath = path.resolve(this.outputFile);
+      const cmd =
+        os.platform() === "darwin"
+          ? `open "${fullPath}"`
+          : os.platform() === "win32"
+            ? `start "" "${fullPath}"`
+            : `xdg-open "${fullPath}"`;
+      execSync(cmd);
+    }
   }
 
   private generateHTML(data: {
@@ -103,7 +131,7 @@ class CustomHTMLReporter implements Reporter {
         <td><span class="badge badge-${r.status}">${r.status}</span></td>
         <td>${(r.duration / 1000).toFixed(2)}s</td>
         <td>${r.tags.map((t) => `<span class="tag">${t}</span>`).join(" ")}</td>
-        <td>${r.error ? `<pre class="error">${this.escapeHtml(r.error)}</pre>` : "—"}</td>
+        <td>${r.error ? `<pre class="error">${this.escapeHtml(r.error)}</pre>` : "\u2014"}</td>
       </tr>`,
       )
       .join("\n");
@@ -140,7 +168,7 @@ class CustomHTMLReporter implements Reporter {
 </head>
 <body>
   <h1 style="margin-bottom: 0.5rem;">Test Report</h1>
-  <p style="opacity: 0.6; margin-bottom: 1.5rem;">Generated ${new Date().toISOString()} — Duration: ${(data.duration / 1000).toFixed(1)}s</p>
+  <p style="opacity: 0.6; margin-bottom: 1.5rem;">Generated ${new Date().toLocaleString("en-GB", { dateStyle: "medium", timeStyle: "short" })} \u2014 Duration: ${(data.duration / 1000).toFixed(1)}s</p>
 
   <div class="dashboard">
     <div class="card"><h3>Total</h3><div class="value">${data.total}</div></div>
@@ -175,7 +203,10 @@ class CustomHTMLReporter implements Reporter {
   }
 
   private escapeHtml(text: string): string {
-    return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+    return text
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;");
   }
 }
 

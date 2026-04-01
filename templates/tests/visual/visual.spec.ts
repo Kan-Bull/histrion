@@ -1,9 +1,5 @@
 import { test } from "../../src/fixtures";
-import {
-  compareElement,
-  compareFullPage,
-  dynamicContentMasks,
-} from "../../src/utils/visual";
+import { compareFullPage } from "../../src/utils/visual";
 
 /**
  * Visual regression tests.
@@ -16,23 +12,9 @@ import {
  *   npx playwright test --project=visual --update-snapshots
  */
 test.describe("Visual Regression @visual", () => {
-  test("dashboard page matches snapshot", async ({ dashboardPage }) => {
-    await dashboardPage.navigate();
+  test("contact page matches snapshot", async ({ contactPage }) => {
+    await contactPage.navigate();
 
-    await compareFullPage(dashboardPage.page, "dashboard-full", {
-      mask: dynamicContentMasks(dashboardPage.page),
-    });
-  });
-
-  test("data table component matches snapshot", async ({ dashboardPage }) => {
-    await dashboardPage.navigate();
-
-    await compareElement(dashboardPage.dataTable.root, "dashboard-data-table");
-  });
-
-  test("login page matches snapshot", async ({ loginPage }) => {
-    await loginPage.navigate();
-
-    await compareFullPage(loginPage.page, "login-full");
+    await compareFullPage(contactPage.page, "contact-full");
   });
 });

@@ -14,8 +14,8 @@ interface EnvironmentConfig {
 
 const environments: Record<Environment, EnvironmentConfig> = {
   local: {
-    baseUrl: "http://localhost:3000",
-    apiUrl: "http://localhost:3000/api",
+    baseUrl: "https://practicesoftwaretesting.com",
+    apiUrl: "https://practicesoftwaretesting.com/api",
     timeout: 15_000,
     retries: 0,
     workers: 4,

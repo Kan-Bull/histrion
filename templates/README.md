@@ -29,10 +29,11 @@ tests/
 > They read like specifications — calling only Page Object methods.
 
 ```typescript
-test('user can search and find results', async ({ loginPage, dashboardPage }) => {
-  await loginPage.loginAs(users.admin);
-  await dashboardPage.searchFor('quarterly report');
-  await dashboardPage.expectSearchResults(3);
+test('user can submit a contact form', async ({ contactPage }) => {
+  await contactPage.navigate();
+  await contactPage.fillContactForm(ContactBuilder.create().build());
+  await contactPage.submitForm();
+  await contactPage.expectSuccessMessage();
 });
 ```
 

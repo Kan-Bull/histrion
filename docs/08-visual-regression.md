@@ -17,11 +17,11 @@ Both live in `src/utils/visual.ts`.
 ```typescript
 import { compareFullPage, dynamicContentMasks } from '../../src/utils/visual';
 
-test('dashboard matches snapshot', async ({ dashboardPage }) => {
-  await dashboardPage.navigate();
+test('contact page matches snapshot', async ({ contactPage }) => {
+  await contactPage.navigate();
 
-  await compareFullPage(dashboardPage.page, 'dashboard-full', {
-    mask: dynamicContentMasks(dashboardPage.page),
+  await compareFullPage(contactPage.page, 'contact-full', {
+    mask: dynamicContentMasks(contactPage.page),
   });
 });
 ```
@@ -38,10 +38,10 @@ Parameters:
 ```typescript
 import { compareElement } from '../../src/utils/visual';
 
-test('data table matches snapshot', async ({ dashboardPage }) => {
-  await dashboardPage.navigate();
+test('contact form matches snapshot', async ({ contactPage }) => {
+  await contactPage.navigate();
 
-  await compareElement(dashboardPage.dataTable.root, 'dashboard-data-table');
+  await compareElement(contactPage.form, 'contact-form');
 });
 ```
 
