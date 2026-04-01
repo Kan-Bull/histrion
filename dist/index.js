@@ -86,7 +86,19 @@ async function main() {
             type: "text",
             name: "baseUrl",
             message: "Application base URL",
-            initial: "http://localhost:3000",
+            initial: "https://practicesoftwaretesting.com",
+        },
+        {
+            type: "confirm",
+            name: "includeExamples",
+            message: "Include example files? (Contact page, test & builder for practicesoftwaretesting.com)",
+            initial: true,
+        },
+        {
+            type: "confirm",
+            name: "includeFaker",
+            message: "Install Faker.js? (generates realistic random test data — names, emails, etc.)",
+            initial: true,
         },
         {
             type: "confirm",
@@ -122,6 +134,56 @@ async function main() {
         const pkgPath = path.join(targetDir, "package.json");
         if (fs.existsSync(tmplPath)) {
             fs.renameSync(tmplPath, pkgPath);
+        }
+        // Add Faker.js to package.json if requested
+        if (config.includeFaker) {
+            const pkgContent = JSON.parse(fs.readFileSync(pkgPath, "utf-8"));
+            pkgContent.devDependencies["@faker-js/faker"] = "^9.0.0";
+            fs.writeFileSync(pkgPath, JSON.stringify(pkgContent, null, 2) + "\n");
+        }
+        // Remove example files if not requested
+        if (!config.includeExamples) {
+            removeFile(path.join(targetDir, "src", "pages", "contact.page.ts"));
+            removeFile(path.join(targetDir, "src", "data", "builders", "contact.builder.ts"));
+            removeFile(path.join(targetDir, "tests", "e2e", "contact.spec.ts"));
+            // Reset fixtures to an empty shell without ContactPage
+            const fixturesPath = path.join(targetDir, "src", "fixtures", "index.ts");
+            fs.writeFileSync(fixturesPath, [
+                'import { test as base } from "@playwright/test";',
+                "",
+                "/**",
+                " * Custom test fixtures extending Playwright's base test.",
+                " *",
+                " * Add your Page Objects here:",
+                " * 1. Import your page class",
+                " * 2. Add it to TestFixtures",
+                " * 3. Add the fixture definition in base.extend()",
+                " */",
+                "",
+                "type TestFixtures = {",
+                "  // myPage: MyPage;",
+                "};",
+                "",
+                "export const test = base.extend<TestFixtures>({",
+                "  // myPage: async ({ page }, use) => {",
+                "  //   await use(new MyPage(page));",
+                "  // },",
+                "});",
+                "",
+                'export { expect } from "../utils/custom-matchers";',
+                "",
+            ].join("\n"));
+            // Strip ContactFormData from types if no examples
+            const typesPath = path.join(targetDir, "src", "data", "types", "index.ts");
+            let typesContent = fs.readFileSync(typesPath, "utf-8");
+            typesContent = typesContent.replace(/\/\/ Contact dropdown.*?\n/s, "");
+            typesContent = typesContent.replace(/export type ContactSubject[\s\S]*?;\n\n/m, "");
+            typesContent = typesContent.replace(/export interface ContactFormData[\s\S]*?}\n\n/m, "");
+            fs.writeFileSync(typesPath, typesContent);
+        }
+        // Remove Faker-dependent builder if Faker not included but examples are
+        if (!config.includeFaker && config.includeExamples) {
+            removeFile(path.join(targetDir, "src", "data", "builders", "contact.builder.ts"));
         }
         if (!config.includeVisual) {
             removeDir(path.join(targetDir, "tests", "visual"));
@@ -210,6 +272,17 @@ async function main() {
     console.log("    npm run lint              # check with Biome");
     console.log("    npm run lint:fix          # auto-fix issues");
     console.log("");
+    if (config.includeExamples) {
+        console.log(kleur_1.default.bold("  Example tests included:\n"));
+        console.log(kleur_1.default.dim("    The project includes a Contact page example based on"));
+        console.log(kleur_1.default.dim("    https://practicesoftwaretesting.com — run them to see"));
+        console.log(kleur_1.default.dim("    the framework in action.\n"));
+    }
+    if (config.includeFaker) {
+        console.log(kleur_1.default.bold("  Faker.js installed:\n"));
+        console.log(kleur_1.default.dim("    Use it in your data builders to generate realistic"));
+        console.log(kleur_1.default.dim("    test data (names, emails, addresses, etc.).\n"));
+    }
     printStructure(config);
 }
 // ──────────────────────────────────────────────
@@ -226,7 +299,7 @@ function copyDir(src, dest, config) {
         else {
             let content = fs.readFileSync(srcPath, "utf-8");
             content = content.replace(/\{\{projectName\}\}/g, config.projectName);
-            content = content.replace(/http:\/\/localhost:3000/g, config.baseUrl);
+            content = content.replace(/https:\/\/practicesoftwaretesting\.com/g, config.baseUrl);
             fs.writeFileSync(destPath, content);
         }
     }
@@ -261,7 +334,9 @@ function printStructure(config) {
         "  src/",
         "  ├── core/            Base classes (BasePage, BaseComponent, BaseAPI)",
         "  ├── components/      Reusable UI components (Table, Modal, Form...)",
-        "  ├── pages/           Page Objects (one per page)",
+        config.includeExamples
+            ? "  ├── pages/           Page Objects (Contact example included)"
+            : "  ├── pages/           Page Objects (one per page)",
         "  ├── fixtures/        Playwright fixture injection",
         config.includeApi ? "  ├── api/             API clients for setup/teardown" : null,
         "  ├── data/            Builders & types for test data",
@@ -269,7 +344,9 @@ function printStructure(config) {
         "  ├── reporters/       Custom HTML reporter",
         "  └── utils/           Logger, custom matchers, visual helpers",
         "  tests/",
-        "  ├── e2e/             End-to-end specs",
+        config.includeExamples
+            ? "  ├── e2e/             End-to-end specs (Contact example included)"
+            : "  ├── e2e/             End-to-end specs",
         config.includeVisual ? "  └── visual/          Visual regression specs" : null,
     ].filter(Boolean);
     for (const line of lines) {
