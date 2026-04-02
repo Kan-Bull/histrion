@@ -1,20 +1,26 @@
 # Architecture
 
-## The 7 layers
+## Layered architecture
 
 ```
-Layer 6  Tests          tests/e2e/*.spec.ts, tests/visual/*.spec.ts
-Layer 5  Fixtures       src/fixtures/index.ts
-Layer 4  Pages          src/pages/*.page.ts
-Layer 3  Components     src/components/*.component.ts
-Layer 2  Core           src/core/base.page.ts, base.component.ts, base.api.ts
-Layer 1  Utilities      src/utils/, src/data/, src/api/
-Layer 0  Config         src/config/, playwright.config.ts
+Tests → Fixtures → Pages → Components → Core → Utils
+                    ↘ Data ↗
 ```
+
+| Layer | Files | Purpose |
+|-------|-------|---------|
+| Tests | `tests/e2e/*.spec.ts`, `tests/visual/*.spec.ts` | Test specs |
+| Fixtures | `src/fixtures/index.ts` | Dependency injection |
+| Pages | `src/pages/*.page.ts` | Page Objects |
+| Components | `src/components/*.component.ts` | Reusable UI parts |
+| Core | `src/core/base.page.ts`, `base.component.ts`, `base.api.ts` | Abstract base classes |
+| Data | `src/data/builders/`, `src/data/types/` | Types and test data builders |
+| Utils | `src/utils/` | Logger, custom matchers, visual helpers |
+| Config | `src/config/`, `playwright.config.ts` | Environment & settings |
 
 Dependencies flow **down** only. A Page can use a Component. A Component can use Core. Nothing flows upward.
 
-### Layer 0 — Config
+### Config
 
 Environment settings, test user credentials, Playwright project definitions.
 
@@ -25,7 +31,7 @@ Environment settings, test user credentials, Playwright project definitions.
 | `src/config/users.config.ts` | Test user credentials (reads from env vars) |
 | `global-setup.ts` | Authenticates users and caches auth state |
 
-### Layer 1 — Utilities
+### Utils & Data
 
 Cross-cutting concerns that don't depend on the application under test.
 
@@ -38,7 +44,7 @@ Cross-cutting concerns that don't depend on the application under test.
 | `src/data/types/index.ts` | Shared TypeScript types |
 | `src/api/*.api.ts` | HTTP clients for test setup/teardown |
 
-### Layer 2 — Core
+### Core
 
 Abstract base classes that define the contracts for Pages, Components, and APIs.
 
@@ -51,7 +57,7 @@ Abstract base classes that define the contracts for Pages, Components, and APIs.
 > [!tip] You rarely modify Core
 > These base classes handle the "how" — logging, waiting, error handling. Your Page Objects and Components handle the "what".
 
-### Layer 3 — Components
+### Components
 
 Reusable UI elements that appear on multiple pages. Each Component is scoped to a `root` Locator.
 
@@ -59,7 +65,7 @@ Built-in: `TableComponent`, `ModalComponent`, `FormComponent`, `ToastComponent`.
 
 See [[04-components]] for details.
 
-### Layer 4 — Pages
+### Pages
 
 One Page Object per page of your application. Pages compose Components and expose semantic methods.
 
@@ -71,7 +77,7 @@ readonly pageTitle = /Login/;
 
 See [[03-page-objects]] for details.
 
-### Layer 5 — Fixtures
+### Fixtures
 
 The bridge between Page Objects and tests. Each fixture instantiates a Page Object and injects it into the test function.
 
@@ -83,7 +89,7 @@ loginPage: async ({ page }, use) => {
 
 See [[05-fixtures]] for details.
 
-### Layer 6 — Tests
+### Tests
 
 Test specs that read like specifications. They use fixtures to get Page Objects and call semantic methods.
 
@@ -99,15 +105,14 @@ test('user can log in with valid credentials', async ({ loginPage }) => {
 ## The dependency rule
 
 ```
-Tests → Fixtures → Pages → Components → Core → Config
-  ↓                   ↓
-Utilities          Utilities
+Tests → Fixtures → Pages → Components → Core → Utils
+                    ↘ Data ↗
 ```
 
 **Allowed:**
-- A test imports from fixtures and utilities
-- A Page imports from components, core, and utilities
-- A Component imports from core and utilities
+- A test imports from fixtures and data
+- A Page imports from components, core, data, and utils
+- A Component imports from core and utils
 
 **Forbidden:**
 - A Component importing from a Page

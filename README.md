@@ -21,7 +21,7 @@
 
 Run one command. Answer a few questions. Get a fully configured project with:
 
-- **Page Object Model architecture** — 7-layer separation of concerns
+- **Page Object Model architecture** — layered separation of concerns
 - **Reusable components** — Table, Modal, Form, Toast out of the box
 - **Type-safe fixtures** — Page Objects injected into tests automatically
 - **Fluent data builders** — chainable test data construction with optional [Faker.js](https://fakerjs.dev/) for realistic random data

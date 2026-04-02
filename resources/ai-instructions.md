@@ -5,10 +5,11 @@ Follow these rules strictly when generating or modifying code.
 
 ## Architecture
 
-The project uses a 7-layer architecture. Dependencies flow **down only**:
+The project uses a layered Page Object Model architecture. Dependencies flow **down only**:
 
 ```
-Tests → Fixtures → Pages → Components → Core → Config → Utils
+Tests → Fixtures → Pages → Components → Core → Utils
+                    ↘ Data ↗
 ```
 
 | Layer | Directory | Purpose |
@@ -18,8 +19,9 @@ Tests → Fixtures → Pages → Components → Core → Config → Utils
 | Pages | `src/pages/` | Page Objects — one per application page |
 | Components | `src/components/` | Reusable UI parts (Table, Modal, Form, Toast) |
 | Core | `src/core/` | Abstract base classes (BasePage, BaseComponent, BaseAPI) |
-| Config | `src/config/` | Environment & user configuration |
+| Data | `src/data/` | Types and fluent test data builders |
 | Utils | `src/utils/` | Logger, custom matchers, visual helpers |
+| Config | `src/config/` | Environment & user configuration |
 
 ## The Golden Rule
 

@@ -27,7 +27,7 @@
 | # | Guide | What you'll learn |
 |---|-------|-------------------|
 | 01 | getting-started | Run your first test, available scripts, project structure, targeting environments |
-| 02 | architecture| The 7-layer architecture, dependency rules, where things go |
+| 02 | architecture| The layered architecture, dependency rules, where things go |
 | 03 | page-objects | Create a Page Object from scratch in 6 steps |
 | 04 | components| Build reusable UI components shared across pages |
 | 05 | fixtures | How Playwright fixtures inject Page Objects into tests |
