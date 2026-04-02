@@ -1,127 +1,116 @@
 # Writing your first test — from A to Z
 
-This guide walks you through creating a complete test for a real page, step by step. We'll use the Contact form on [practicesoftwaretesting.com/contact](https://practicesoftwaretesting.com/contact) as our example.
+This guide walks you through creating a complete test for a real page in your application, step by step.
 
 By the end, you'll have:
 - A typed data model
 - A Page Object with locators, actions, and assertions
 - A registered fixture
-- Working tests (with optional Faker.js support)
+- Working tests
+
+> **Tip:** If you scaffolded with starter templates, the boilerplate files are already in place — you just need to fill them in as you follow along.
 
 ---
 
 ## Step 0 — Map the page elements
 
-Before writing code, open DevTools and identify every element you'll interact with. For the Contact form:
+Before writing code, open DevTools on the page you want to test and identify every element you'll interact with.
+
+For example, if you're testing a login page:
 
 | Element | Best locator | Notes |
 |---------|-------------|-------|
-| First name input | `data-test="first-name"` | Text field |
-| Last name input | `data-test="last-name"` | Text field |
-| Email input | `data-test="email"` | Email field |
-| Subject dropdown | `data-test="subject"` | Select with fixed options |
-| Message textarea | `data-test="message"` | Textarea |
-| Submit button | `data-test="contact-submit"` | Button |
-| Success alert | `role="alert"` | Appears after submit |
-| Validation errors | `data-test="*-error"` | One per required field |
+| Username input | `data-testid="username"` | Text field |
+| Password input | `data-testid="password"` | Password field |
+| Submit button | `data-testid="login-submit"` | Button |
+| Error message | `role="alert"` | Appears on invalid credentials |
 
-> **Tip:** You can use `npx histrion scan https://practicesoftwaretesting.com/contact` to automate this step. The scanner finds all interactive elements and picks the best locator strategy for each one.
+> **Tip:** You can use `npx histrion scan <url>` to automate this step. The scanner finds all interactive elements and picks the best locator strategy for each one.
+
+### Locator priority
+
+Prefer stable, language-independent locators:
+
+1. `data-testid` — most stable, recommended
+2. `id` — stable if unique
+3. `getByRole` + accessible name — good but can be locale-dependent
+4. `getByLabel` — ties to form labels
+5. `getByPlaceholder` — less stable
+6. CSS selectors — last resort
 
 ---
 
 ## Step 1 — Define the data type
 
-Create the interface that represents the form data in `src/data/types/index.ts`:
+Create an interface that represents the data your page works with. If you have a starter template, rename and edit `src/data/types/example.ts`. Otherwise, create a new file in `src/data/types/`:
 
 ```typescript
-export type ContactSubject =
-  | "customer-service"
-  | "webmaster"
-  | "return"
-  | "payments"
-  | "warranty"
-  | "status-of-order";
-
-export interface ContactFormData {
-  firstName: string;
-  lastName: string;
-  email: string;
-  subject: ContactSubject;
-  message: string;
+export interface LoginCredentials {
+  username: string;
+  password: string;
 }
 ```
 
-This gives you type safety everywhere — the compiler will catch typos in subject values, missing fields, and wrong types.
+Then export it from `src/data/types/index.ts`:
+
+```typescript
+export type { LoginCredentials } from './login';
+```
+
+This gives you type safety everywhere — the compiler will catch typos, missing fields, and wrong types.
 
 ---
 
 ## Step 2 — Create the Page Object
 
-Create `src/pages/contact.page.ts`:
+If you have a starter template, rename and edit `src/pages/example.page.ts`. Otherwise, create a new file (e.g. `src/pages/login.page.ts`):
 
 ```typescript
 import { expect } from "@playwright/test";
 import { BasePage } from "../core/base.page";
-import type { ContactFormData } from "../data/types";
+import type { LoginCredentials } from "../data/types";
 
-export class ContactPage extends BasePage {
-  readonly path = "/contact";
-  readonly pageTitle = /Contact Us/;
+export class LoginPage extends BasePage {
+  readonly path = "/login";
+  readonly pageTitle = /Login/;
 
   // ── Locators (private — never exposed to tests) ──
-
-  // Form fields
-  private readonly firstNameInput = this.page.getByTestId("first-name");
-  private readonly lastNameInput = this.page.getByTestId("last-name");
-  private readonly emailInput = this.page.getByTestId("email");
-  private readonly subjectSelect = this.page.getByTestId("subject");
-  private readonly messageTextarea = this.page.getByTestId("message");
-  private readonly submitButton = this.page.getByTestId("contact-submit");
-  private readonly successMessage = this.page.getByRole("alert");
-
-  // Validation errors
-  private readonly firstNameError = this.page.getByTestId("first-name-error");
-  private readonly lastNameError = this.page.getByTestId("last-name-error");
-  private readonly emailError = this.page.getByTestId("email-error");
-  private readonly messageError = this.page.getByTestId("message-error");
+  private readonly usernameInput = this.page.getByTestId("username");
+  private readonly passwordInput = this.page.getByTestId("password");
+  private readonly submitButton = this.page.getByTestId("login-submit");
+  private readonly errorMessage = this.page.getByRole("alert");
 
   // ── Actions ──
 
-  async fillContactForm(data: ContactFormData): Promise<void> {
-    this.log.step(`Filling contact form for ${data.email}`);
-    await this.fill(this.firstNameInput, data.firstName, "first name");
-    await this.fill(this.lastNameInput, data.lastName, "last name");
-    await this.fill(this.emailInput, data.email, "email");
-    await this.selectOption(this.subjectSelect, data.subject, "subject");
-    await this.fill(this.messageTextarea, data.message, "message");
+  async fillCredentials(data: LoginCredentials): Promise<void> {
+    this.log.step(`Logging in as ${data.username}`);
+    await this.fill(this.usernameInput, data.username, "username");
+    await this.fill(this.passwordInput, data.password, "password");
   }
 
-  async submitForm(): Promise<void> {
-    this.log.step("Submitting contact form");
+  async submit(): Promise<void> {
+    this.log.step("Submitting login form");
     await this.click(this.submitButton, "Submit button");
   }
 
   // ── Assertions ──
 
-  async expectSuccessMessage(): Promise<void> {
-    this.log.step("Verifying success message");
-    await expect(this.successMessage).toBeVisible();
-    this.log.success("Success alert visible");
+  async expectDashboard(): Promise<void> {
+    this.log.step("Verifying redirect to dashboard");
+    await expect(this.page).toHaveURL(/dashboard/);
+    this.log.success("Dashboard loaded");
   }
 
-  async expectValidationErrors(): Promise<void> {
-    this.log.step("Verifying validation errors");
-    await expect(this.firstNameError).toBeVisible();
-    await expect(this.lastNameError).toBeVisible();
-    await expect(this.emailError).toBeVisible();
-    await expect(this.messageError).toBeVisible();
-    this.log.success("All validation errors visible");
+  async expectError(message: string): Promise<void> {
+    this.log.step("Verifying error message");
+    await expect(this.errorMessage).toContainText(message);
+    this.log.success("Error message visible");
   }
 }
 ```
 
 Key principles:
-- **Locators are private** — tests never touch selectors directly
+- **Locators are `private readonly`** — tests never touch selectors directly
 - **Actions use `this.log`** — every interaction is traced in the structured logger
 - **Assertions live in the Page Object** — tests read like specifications, not implementation details
 - **`this.fill()`, `this.click()`, `this.selectOption()`** — inherited from `BasePage`, they handle logging and waiting automatically
@@ -130,75 +119,68 @@ Key principles:
 
 ## Step 3 — Register the fixture
 
-Open `src/fixtures/index.ts` and add `ContactPage`:
+Open `src/fixtures/index.ts` and add your page:
 
 ```typescript
 import { test as base } from "@playwright/test";
-import { ContactPage } from "../pages/contact.page";
+import { LoginPage } from "../pages/login.page";
 
 type TestFixtures = {
-  contactPage: ContactPage;
+  loginPage: LoginPage;
 };
 
 export const test = base.extend<TestFixtures>({
-  contactPage: async ({ page }, use) => {
-    await use(new ContactPage(page));
+  loginPage: async ({ page }, use) => {
+    await use(new LoginPage(page));
   },
 });
 
 export { expect } from "../utils/custom-matchers";
 ```
 
-Now any test can request `contactPage` as a parameter and get a fully initialized instance.
+Now any test can request `loginPage` as a parameter and get a fully initialized instance.
 
 ---
 
 ## Step 4 — Write the tests
 
-Create `tests/e2e/contact.spec.ts`:
+Create a test file in `tests/e2e/` (or rename `tests/e2e/example.spec.ts` if using the starter template):
 
 ```typescript
-import type { ContactFormData } from "../../src/data/types";
 import { test } from "../../src/fixtures";
 
-const validContact: ContactFormData = {
-  firstName: "John",
-  lastName: "Doe",
-  email: "john.doe@example.com",
-  subject: "customer-service",
-  message: "I need help with my account.",
+const validCredentials = {
+  username: "user@example.com",
+  password: "s3cret",
 };
 
-test.describe("Contact form @smoke", () => {
-  test.beforeEach(async ({ contactPage }) => {
-    await contactPage.navigate();
+test.describe("Login @smoke", () => {
+  test.beforeEach(async ({ loginPage }) => {
+    await loginPage.navigate();
   });
 
-  test("should submit successfully with valid data", async ({ contactPage }) => {
-    await contactPage.fillContactForm(validContact);
-    await contactPage.submitForm();
-    await contactPage.expectSuccessMessage();
+  test("should redirect to dashboard with valid credentials", async ({ loginPage }) => {
+    await loginPage.fillCredentials(validCredentials);
+    await loginPage.submit();
+    await loginPage.expectDashboard();
   });
 
-  test("should show validation errors for empty form", async ({ contactPage }) => {
-    await contactPage.fillContactForm({
-      ...validContact,
-      email: "not-an-email",
-      firstName: "",
-      lastName: "",
-      message: "",
+  test("should show error for invalid credentials", async ({ loginPage }) => {
+    await loginPage.fillCredentials({
+      username: "bad@example.com",
+      password: "wrong",
     });
-    await contactPage.submitForm();
-    await contactPage.expectValidationErrors();
+    await loginPage.submit();
+    await loginPage.expectError("Invalid credentials");
   });
 });
 ```
 
 Notice how the tests read like plain English:
-1. Navigate to the contact page
-2. Fill the form
+1. Navigate to the login page
+2. Fill in credentials
 3. Submit
-4. Expect success (or validation errors)
+4. Expect success (or error)
 
 No selectors, no `page.click()`, no implementation details.
 
@@ -208,68 +190,53 @@ No selectors, no `page.click()`, no implementation details.
 
 If you installed Faker.js during scaffolding, you can create a builder that generates random but realistic test data.
 
-Create `src/data/builders/contact.builder.ts`:
+Create `src/data/builders/login.builder.ts`:
 
 ```typescript
 import { faker } from "@faker-js/faker";
-import type { ContactFormData, ContactSubject } from "../types";
+import type { LoginCredentials } from "../types";
 import { Builder } from "./base.builder";
 
-const SUBJECTS: ContactSubject[] = [
-  "customer-service",
-  "webmaster",
-  "return",
-  "payments",
-];
-
-export class ContactBuilder extends Builder<ContactFormData> {
-  private constructor() {
+export class LoginBuilder extends Builder<LoginCredentials> {
+  constructor() {
     super({
-      firstName: faker.person.firstName(),
-      lastName: faker.person.lastName(),
-      email: faker.internet.email(),
-      subject: faker.helpers.arrayElement(SUBJECTS),
-      message: faker.lorem.sentence({ min: 5, max: 20 }),
+      username: faker.internet.email(),
+      password: faker.internet.password({ length: 12 }),
     });
   }
 
-  static create(): ContactBuilder {
-    return new ContactBuilder();
+  static create(): LoginBuilder {
+    return new LoginBuilder();
   }
 
-  withEmail(email: string): this {
-    this.data.email = email;
+  withUsername(username: string): this {
+    this.data.username = username;
     return this;
   }
 
-  withSubject(subject: ContactSubject): this {
-    this.data.subject = subject;
-    return this;
-  }
-
-  withMessage(message: string): this {
-    this.data.message = message;
+  withPassword(password: string): this {
+    this.data.password = password;
     return this;
   }
 }
 ```
 
-Now add a test that uses random data:
+Now use it in tests:
 
 ```typescript
-import { ContactBuilder } from "../../src/data/builders/contact.builder";
+import { LoginBuilder } from "../../src/data/builders/login.builder";
 
-test("should submit successfully with random valid data", async ({ contactPage }) => {
-  await contactPage.fillContactForm(ContactBuilder.create().build());
-  await contactPage.submitForm();
-  await contactPage.expectSuccessMessage();
+test("should handle random valid credentials", async ({ loginPage }) => {
+  await loginPage.fillCredentials(LoginBuilder.create().build());
+  await loginPage.submit();
+  // assert expected outcome
 });
 ```
 
-Every run produces unique data — different names, emails, and messages. Override only what matters for a specific test:
+Override only what matters for a specific test:
 
 ```typescript
-ContactBuilder.create().withSubject("warranty").build();
+LoginBuilder.create().withUsername("admin@company.com").build();
 ```
 
 ---
@@ -279,10 +246,10 @@ ContactBuilder.create().withSubject("warranty").build();
 | Step | File | What you did |
 |------|------|-------------|
 | 0 | DevTools / scanner | Mapped interactive elements and their best locators |
-| 1 | `src/data/types/index.ts` | Defined the `ContactFormData` interface |
-| 2 | `src/pages/contact.page.ts` | Created the Page Object with locators, actions, assertions |
+| 1 | `src/data/types/` | Defined the data interface |
+| 2 | `src/pages/*.page.ts` | Created the Page Object with locators, actions, assertions |
 | 3 | `src/fixtures/index.ts` | Registered the fixture for dependency injection |
-| 4 | `tests/e2e/contact.spec.ts` | Wrote the actual tests |
-| 5 | `src/data/builders/contact.builder.ts` | *(optional)* Added a Faker-powered data builder |
+| 4 | `tests/e2e/*.spec.ts` | Wrote the actual tests |
+| 5 | `src/data/builders/*.builder.ts` | *(optional)* Added a Faker-powered data builder |
 
 This is the pattern for every page you test. The structure stays the same — only the locators, actions, and assertions change.
