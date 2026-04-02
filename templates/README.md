@@ -29,11 +29,11 @@ tests/
 > They read like specifications — calling only Page Object methods.
 
 ```typescript
-test('user can submit a contact form', async ({ contactPage }) => {
-  await contactPage.navigate();
-  await contactPage.fillContactForm(ContactBuilder.create().build());
-  await contactPage.submitForm();
-  await contactPage.expectSuccessMessage();
+test('user can log in', async ({ loginPage }) => {
+  await loginPage.navigate();
+  await loginPage.fillCredentials({ username: 'user@test.com', password: 's3cret' });
+  await loginPage.submit();
+  await loginPage.expectDashboard();
 });
 ```
 
@@ -149,11 +149,11 @@ test('should work', async ({ myNewPage }) => {
 Every action is traced with a timestamped, color-coded log — so when a test fails, you know exactly what happened:
 
 ```
-14:32:01 ■ ContactPage     │ 🔹 Filling contact form for john@example.com
-14:32:01 ■ ContactPage     │    ▸ Fill "first name" with "John"
-14:32:02 ■ ContactPage     │    ▸ Fill "last name" with "Doe"
-14:32:02 ■ ContactPage     │ 🔹 Submitting contact form
-14:32:03 ■ ContactPage     │ ✓ Success alert visible
+14:32:01 ■ LoginPage       │ 🔹 Filling credentials for user@test.com
+14:32:01 ■ LoginPage       │    ▸ Fill "username" with "user@test.com"
+14:32:02 ■ LoginPage       │    ▸ Fill "password" with "***"
+14:32:02 ■ LoginPage       │ 🔹 Submitting login form
+14:32:03 ■ LoginPage       │ ✓ Dashboard visible
 ```
 
 The logger is fully customizable — change colors, icons, add new log levels, or adjust the output format. See `src/utils/logger.ts` or read `docs/13-logger.md` for details.

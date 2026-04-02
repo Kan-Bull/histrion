@@ -12,9 +12,9 @@ import { compareFullPage } from "../../src/utils/visual";
  *   npx playwright test --project=visual --update-snapshots
  */
 test.describe("Visual Regression @visual", () => {
-  test("contact page matches snapshot", async ({ contactPage }) => {
-    await contactPage.navigate();
-
-    await compareFullPage(contactPage.page, "contact-full");
-  });
+  // test("my page matches snapshot", async ({ examplePage }) => {
+  //   await examplePage.navigate();
+  //
+  //   await compareFullPage(examplePage.page, "my-page-full");
+  // });
 });

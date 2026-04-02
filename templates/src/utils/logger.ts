@@ -27,11 +27,11 @@ const THEME: Record<LogLevel, { color: string; icon: string }> = {
  *
  * Output example:
  * ```
- * 14:32:01 ■ ContactPage     │ 🔹 Filling contact form for john@example.com
- * 14:32:01 ■ ContactPage     │    ▸ Fill "first name" with "John"
- * 14:32:02 ■ ContactPage     │    ▸ Fill "last name" with "Doe"
- * 14:32:02 ■ ContactPage     │ 🔹 Submitting contact form
- * 14:32:03 ■ ContactPage     │ ✓ Success alert visible
+ * 14:32:01 ■ LoginPage       │ 🔹 Filling credentials for user@test.com
+ * 14:32:01 ■ LoginPage       │    ▸ Fill "username" with "user@test.com"
+ * 14:32:02 ■ LoginPage       │    ▸ Fill "password" with "***"
+ * 14:32:02 ■ LoginPage       │ 🔹 Submitting login form
+ * 14:32:03 ■ LoginPage       │ ✓ Dashboard visible
  * ```
  */
 export class Logger {
