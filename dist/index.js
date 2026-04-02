@@ -88,6 +88,8 @@ function printUsage() {
     console.log();
     console.log(kleur_1.default.bold("  Options:\n"));
     console.log("    scan --test-id-attr <attr>   Custom test ID attribute (default: data-testid)");
+    console.log("    scan --headed                Open browser visibly — log in, then press Enter to scan");
+    console.log("    scan --auth <file>           Use saved auth state (e.g. auth/admin.json)");
     console.log();
     console.log(kleur_1.default.bold("  Examples:\n"));
     console.log(kleur_1.default.dim("    npx histrion create"));
@@ -95,6 +97,8 @@ function printUsage() {
     console.log(kleur_1.default.dim("    npx histrion create .              # scaffold in current directory"));
     console.log(kleur_1.default.dim("    npx histrion scan https://myapp.com/login"));
     console.log(kleur_1.default.dim("    npx histrion scan https://myapp.com/login --test-id-attr data-cy"));
+    console.log(kleur_1.default.dim("    npx histrion scan https://myapp.com/settings --headed"));
+    console.log(kleur_1.default.dim("    npx histrion scan https://myapp.com/settings --auth auth/admin.json"));
     console.log();
 }
 async function main() {
@@ -110,7 +114,11 @@ async function main() {
         const testIdAttr = args.includes("--test-id-attr")
             ? args[args.indexOf("--test-id-attr") + 1] || "data-testid"
             : "data-testid";
-        await (0, scanner_1.scan)(url, testIdAttr);
+        const headed = args.includes("--headed");
+        const authFile = args.includes("--auth")
+            ? args[args.indexOf("--auth") + 1]
+            : undefined;
+        await (0, scanner_1.scan)(url, testIdAttr, { headed, authFile });
         return;
     }
     // ── Subcommand: create ──
