@@ -42,5 +42,6 @@
 | 14 | scanner | Page scanner: analyze a live page and generate a Page Object automatically |
 | 15 | writing-your-first-test | End-to-end walkthrough: from DevTools to a running test in 5 steps |
 | 16 | glossary | Plain-language reference for every concept used in the framework |
+| 17 | biome | Biome linter & formatter: why we chose it, how to configure it, editor setup |
 
 
