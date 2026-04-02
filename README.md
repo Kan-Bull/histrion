@@ -24,7 +24,7 @@ Run one command. Answer a few questions. Get a fully configured project with:
 - **Page Object Model architecture** — 7-layer separation of concerns
 - **Reusable components** — Table, Modal, Form, Toast out of the box
 - **Type-safe fixtures** — Page Objects injected into tests automatically
-- **Fluent data builders** — `ContactBuilder.create().withSubject('customer-service').build()`
+- **Fluent data builders** — chainable test data construction with optional Faker.js
 - **Faker.js integration** — generate realistic random test data (optional)
 - **API helpers** — setup/teardown without touching the UI
 - **Visual regression** — screenshot comparison with smart masking
@@ -34,7 +34,7 @@ Run one command. Answer a few questions. Get a fully configured project with:
 - **Biome** — linting + formatting, zero config
 - **GitHub Actions** — CI/CD with matrix strategy, manual dispatch
 - **16 documentation guides** — from getting started to best practices
-- **Working examples** — Contact page tests against [practicesoftwaretesting.com](https://practicesoftwaretesting.com)
+- **Starter templates** — Page Object, fixture & test boilerplate ready to fill in
 - **Page scanner** — analyze any live page and generate a Page Object automatically
 
 ## Quick start
@@ -52,7 +52,7 @@ The CLI scaffolds the project, installs dependencies, downloads Playwright brows
 
   - Project name: my-e2e-tests
   - Application base URL: https://practicesoftwaretesting.com
-  - Include example files? Yes
+  - Include starter template files? Yes
   - Install Faker.js? Yes
   - Include visual regression tests? Yes
   - Include API helpers for setup/teardown? Yes
@@ -109,11 +109,11 @@ The scanner prioritizes stable, language-independent locators (`data-testid`, `i
 Every Page Object, Component, and API action is traced automatically:
 
 ```
-14:32:01 ■ ContactPage     │ 🔹 Filling contact form for john@example.com
-14:32:01 ■ ContactPage     │    ▸ Fill "first name" with "John"
-14:32:02 ■ ContactPage     │    ▸ Fill "last name" with "Doe"
-14:32:02 ■ ContactPage     │ 🔹 Submitting contact form
-14:32:03 ■ ContactPage     │ ✓ Success alert visible
+14:32:01 ■ LoginPage       │ 🔹 Filling credentials for user@test.com
+14:32:01 ■ LoginPage       │    ▸ Fill "username" with "user@test.com"
+14:32:02 ■ LoginPage       │    ▸ Fill "password" with "***"
+14:32:02 ■ LoginPage       │ 🔹 Submitting login form
+14:32:03 ■ LoginPage       │ ✓ Dashboard visible
 ```
 
 Five log levels (`step`, `action`, `success`, `warn`, `error`) with customizable colors, icons, and formatting. Add your own levels in one file — see `src/utils/logger.ts`.
@@ -123,11 +123,11 @@ Five log levels (`step`, `action`, `success`, `warn`, `error`) with customizable
 > **Tests never contain selectors.** They read like specifications.
 
 ```typescript
-test('user can submit a contact form', async ({ contactPage }) => {
-  await contactPage.navigate();
-  await contactPage.fillContactForm(ContactBuilder.create().build());
-  await contactPage.submitForm();
-  await contactPage.expectSuccessMessage();
+test('user can log in', async ({ loginPage }) => {
+  await loginPage.navigate();
+  await loginPage.fillCredentials({ username: 'user@test.com', password: 's3cret' });
+  await loginPage.submit();
+  await loginPage.expectDashboard();
 });
 ```
 
@@ -158,14 +158,16 @@ docs/               Local-only documentation (13 guides, gitignored)
 
 Dependencies flow **down** only. Tests → Fixtures → Pages → Components → Core → Config.
 
-## Example tests
+## Starter templates
 
-The scaffolded project includes working tests against [practicesoftwaretesting.com](https://practicesoftwaretesting.com):
+The scaffolded project includes ready-to-use boilerplate:
 
-- **Contact form submission** — valid data, random data (via Faker), validation errors
-- **Visual regression** — full-page screenshot comparison
+- **Page Object** — `src/pages/example.page.ts` with locators, actions, and assertions sections
+- **Test file** — `tests/e2e/example.spec.ts` with describe block, beforeEach, and test structure
+- **Type definition** — `src/data/types/example.ts` for your page's data shape
+- **Fixture wiring** — `src/fixtures/index.ts` pre-configured
 
-These examples demonstrate the full framework: Page Objects, fixtures, data builders, and structured logging. Run them immediately after scaffolding.
+Open `example.page.ts` and follow `docs/15-writing-your-first-test.md` to adapt them to your app.
 
 ## Available scripts
 
