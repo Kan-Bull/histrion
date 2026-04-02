@@ -45,6 +45,13 @@ const prompts_1 = __importDefault(require("prompts"));
 const scanner_1 = require("./scanner");
 const TEMPLATES_DIR = path.join(__dirname, "..", "templates");
 const DOCS_DIR = path.join(__dirname, "..", "docs");
+const AI_INSTRUCTIONS_DIR = path.join(__dirname, "..", "resources");
+const AI_TOOLS = [
+    { key: "copilot", title: "GitHub Copilot", file: path.join(".github", "copilot-instructions.md") },
+    { key: "claude", title: "Claude Code", file: "CLAUDE.md" },
+    { key: "cursor", title: "Cursor", file: ".cursorrules" },
+    { key: "windsurf", title: "Windsurf", file: ".windsurfrules" },
+];
 // ──────────────────────────────────────────────
 //  Spinner
 // ──────────────────────────────────────────────
@@ -171,6 +178,13 @@ async function main() {
             message: "Include GitHub Actions CI/CD?",
             initial: true,
         },
+        {
+            type: "multiselect",
+            name: "aiInstructions",
+            message: "AI coding assistant instructions?",
+            choices: AI_TOOLS.map((t) => ({ title: t.title, value: t.key })),
+            hint: "— space to select, enter to confirm",
+        },
     ], { onCancel: () => process.exit(1) });
     const config = response;
     if (scaffoldInPlace) {
@@ -261,6 +275,20 @@ async function main() {
         }
         if (!config.includeCi) {
             removeDir(path.join(targetDir, ".github"));
+        }
+        // Write AI coding assistant instructions
+        if (config.aiInstructions.length > 0) {
+            const aiTemplatePath = path.join(AI_INSTRUCTIONS_DIR, "ai-instructions.md");
+            let aiContent = fs.readFileSync(aiTemplatePath, "utf-8");
+            aiContent = aiContent.replace(/\{\{projectName\}\}/g, config.projectName);
+            for (const tool of config.aiInstructions) {
+                const entry = AI_TOOLS.find((t) => t.key === tool);
+                if (entry) {
+                    const fullPath = path.join(targetDir, entry.file);
+                    fs.mkdirSync(path.dirname(fullPath), { recursive: true });
+                    fs.writeFileSync(fullPath, aiContent);
+                }
+            }
         }
         copyDir(DOCS_DIR, path.join(targetDir, "docs"), config);
         fs.mkdirSync(path.join(targetDir, "auth"), { recursive: true });
@@ -358,6 +386,14 @@ async function main() {
         console.log(kleur_1.default.dim("    Use it in your data builders to generate realistic"));
         console.log(kleur_1.default.dim("    test data (names, emails, addresses, etc.).\n"));
     }
+    if (config.aiInstructions.length > 0) {
+        const names = config.aiInstructions
+            .map((t) => AI_TOOLS.find((a) => a.key === t)?.title || t)
+            .join(", ");
+        console.log(kleur_1.default.bold("  AI instructions included:\n"));
+        console.log(kleur_1.default.dim(`    Generated for: ${names}`));
+        console.log(kleur_1.default.dim("    Your AI assistant will follow the project's POM architecture.\n"));
+    }
     printStructure(config);
 }
 // ──────────────────────────────────────────────
@@ -423,6 +459,9 @@ function printStructure(config) {
             ? "  ├── e2e/             End-to-end specs (starter template included)"
             : "  ├── e2e/             End-to-end specs",
         config.includeVisual ? "  └── visual/          Visual regression specs" : null,
+        config.aiInstructions.length > 0
+            ? `  AI instructions:     ${config.aiInstructions.map((t) => AI_TOOLS.find((a) => a.key === t)?.file || t).join(", ")}`
+            : null,
     ].filter(Boolean);
     for (const line of lines) {
         console.log(line);
