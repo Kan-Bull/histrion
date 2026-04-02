@@ -5,19 +5,18 @@
 >
 > ```typescript
 > // Good : reads like a spec
-> test('user can submit a contact form', async ({ contactPage }) => {
->   await contactPage.navigate();
->   await contactPage.fillContactForm(ContactBuilder.create().build());
->   await contactPage.submitForm();
->   await contactPage.expectSuccessMessage();
+> test('user can log in', async ({ loginPage }) => {
+>   await loginPage.navigate();
+>   await loginPage.fillCredentials({ username: 'user@test.com', password: 's3cret' });
+>   await loginPage.submit();
+>   await loginPage.expectDashboard();
 > });
 >
 > // Bad : implementation details leaked into the test
-> test('user can submit a contact form', async ({ page }) => {
->   await page.fill('#first_name', 'John');
->   await page.fill('#last_name', 'Doe');
->   await page.fill('#email', 'john@example.com');
->   await page.click('.btnSubmit');
+> test('user can log in', async ({ page }) => {
+>   await page.fill('#username', 'user@test.com');
+>   await page.fill('#password', 's3cret');
+>   await page.click('button[type="submit"]');
 > });
 > ```
 >
@@ -42,5 +41,6 @@
 | 13 | logger | Structured logger: levels, customization, adding your own levels |
 | 14 | scanner | Page scanner: analyze a live page and generate a Page Object automatically |
 | 15 | writing-your-first-test | End-to-end walkthrough: from DevTools to a running test in 5 steps |
+| 16 | glossary | Plain-language reference for every concept used in the framework |
 
 
