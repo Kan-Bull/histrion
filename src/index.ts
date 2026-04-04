@@ -69,7 +69,7 @@ function printUsage(): void {
   console.log(kleur.bold("  Commands:\n"));
   console.log("    histrion create [name|.]       Scaffold a new Playwright project");
   console.log("    histrion scan <url>           Analyze a page and generate a Page Object");
-  console.log("    histrion extract '<html>'     Extract all locators from a copied HTML element");
+  console.log("    histrion extract              Extract locators from clipboard (Copy Element in DevTools)");
   console.log();
   console.log(kleur.bold("  Options:\n"));
   console.log("    scan --test-id-attr <attr>   Custom test ID attribute (default: data-testid)");
@@ -84,19 +84,25 @@ function printUsage(): void {
   console.log(kleur.dim("    npx histrion scan https://myapp.com/login --test-id-attr data-cy"));
   console.log(kleur.dim("    npx histrion scan https://myapp.com/settings --headed"));
   console.log(kleur.dim("    npx histrion scan https://myapp.com/settings --auth auth/admin.json"));
-  console.log(kleur.dim(`    npx histrion extract '<button id="login" class="btn btn-primary">Sign In</button>'`));
-  console.log(kleur.dim(`    echo '<div data-testid="alert">' | npx histrion extract`));
+  console.log(kleur.dim("    npx histrion extract                            # reads from clipboard"));
+  console.log(kleur.dim(`    npx histrion extract '<button id="login">Sign In</button>'`));
   console.log();
 }
 
-function printExtractUsage(): void {
-  console.log(kleur.red("\n  Usage: histrion extract '<html_element>'"));
-  console.log();
-  console.log(kleur.bold("  Tip:"), "Multiline HTML from Chrome DevTools? Pipe from clipboard:");
-  console.log(kleur.dim("    pbpaste | npx histrion extract"), kleur.dim("          # macOS"));
-  console.log(kleur.dim("    xclip -selection clipboard -o | npx histrion extract"), kleur.dim(" # Linux"));
-  console.log(kleur.dim("    powershell Get-Clipboard | npx histrion extract"), kleur.dim("  # Windows"));
-  console.log();
+function readClipboard(): string | null {
+  const cmds: Record<string, string> = {
+    darwin: "pbpaste",
+    linux: "xclip -selection clipboard -o",
+    win32: "powershell -command Get-Clipboard",
+  };
+  const cmd = cmds[process.platform];
+  if (!cmd) return null;
+
+  try {
+    return execSync(cmd, { encoding: "utf-8", stdio: ["pipe", "pipe", "ignore"] }).trim();
+  } catch {
+    return null;
+  }
 }
 
 async function main(): Promise<void> {
@@ -106,27 +112,38 @@ async function main(): Promise<void> {
   if (args[0] === "extract") {
     const htmlArg = args.slice(1).join(" ");
 
-    // Support piped input: pbpaste | npx histrion extract
-    if (!htmlArg && !process.stdin.isTTY) {
+    // Priority 1: inline argument
+    if (htmlArg) {
+      extract(htmlArg);
+      return;
+    }
+
+    // Priority 2: piped input
+    if (!process.stdin.isTTY) {
       const chunks: Buffer[] = [];
       for await (const chunk of process.stdin) {
         chunks.push(chunk);
       }
       const piped = Buffer.concat(chunks).toString("utf-8").trim();
-      if (!piped) {
-        printExtractUsage();
-        process.exit(1);
+      if (piped) {
+        extract(piped);
+        return;
       }
-      extract(piped);
+    }
+
+    // Priority 3: read from clipboard
+    const clipboard = readClipboard();
+    if (clipboard && clipboard.startsWith("<")) {
+      console.log(kleur.dim("  (reading from clipboard)"));
+      extract(clipboard);
       return;
     }
 
-    if (!htmlArg) {
-      printExtractUsage();
-      process.exit(1);
-    }
-    extract(htmlArg);
-    return;
+    console.log(kleur.red("\n  No HTML found. Either:"));
+    console.log(`    1. Copy an element in Chrome DevTools, then run ${kleur.cyan("npx histrion extract")}`);
+    console.log(`    2. Pass it inline: ${kleur.cyan(`npx histrion extract '<button id="ok">OK</button>'`)}`);
+    console.log();
+    process.exit(1);
   }
 
   // ── Subcommand: scan ──
