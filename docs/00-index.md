@@ -43,5 +43,7 @@
 | 15 | writing-your-first-test | End-to-end walkthrough: from DevTools to a running test in 5 steps |
 | 16 | glossary | Plain-language reference for every concept used in the framework |
 | 17 | biome | Biome linter & formatter: why we chose it, how to configure it, editor setup |
+| 18 | custom-reporter | Custom HTML reporter: configuration, auto-open, tags, CI artifacts, customization |
+| 19 | extract | Element extractor: copy from DevTools, get all locators ranked by stability |
 
 

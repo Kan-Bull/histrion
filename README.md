@@ -35,7 +35,8 @@ Run one command. Answer a few questions. Get a fully configured project with:
 - **Starter templates** — Page Object, fixture & test boilerplate ready to fill in
 - **AI instructions** — optional rules for Copilot, Claude Code, Cursor, or Windsurf so your AI assistant follows the architecture
 - **Page scanner** — analyze any live page and generate a Page Object automatically, with `--headed` and `--auth` support for authenticated pages
-- **18 documentation guides** — from getting started to best practices, including a glossary
+- **Element extractor** — copy any HTML element from DevTools, get every Playwright locator ranked by stability
+- **20 documentation guides** — from getting started to best practices, including a glossary
 
 ## Quick start
 
@@ -105,6 +106,40 @@ npx histrion scan https://myapp.com/login
 
 The scanner prioritizes stable, language-independent locators (`data-testid`, `id`) over locale-dependent ones (`getByRole`, `getByLabel`). Works on any website — no Histrion project required.
 
+## Element extractor
+
+See an element in DevTools? Copy it and get every possible Playwright locator ranked by stability:
+
+1. Right-click an element in Chrome DevTools > **Copy** > **Copy element**
+2. Run:
+
+```bash
+npx histrion extract
+```
+
+```
+  🔍 Analyzing element...
+
+  Root: <div> with text "You logged into a secure area!"
+
+  ┌─────────────────────────────────────────────────────────────────────────────┐
+  │ #  Strategy          Locator                                       Stability│
+  ├─────────────────────────────────────────────────────────────────────────────┤
+  │ 1  locator#id        locator("#flash")                                🟢   │
+  │ 2  getByRole         getByRole("alert", { name: "You logged in..." }) 🟡   │
+  │ 3  getByText         getByText("You logged into a secure area!")      🔴   │
+  └─────────────────────────────────────────────────────────────────────────────┘
+
+  Select locator [1]: _
+
+  Copy-paste ready:
+    private readonly flash = this.page.locator("#flash");
+```
+
+The extractor reads your clipboard automatically (macOS, Linux, Windows). It also analyzes child elements — if you copy a parent `<div>`, any child `<button>` or `<input>` with meaningful attributes gets its own locator table. Pick any locator by number and get a copy-paste ready `private readonly` declaration.
+
+Also accepts inline HTML: `npx histrion extract '<button id="ok">OK</button>'`
+
 ### Scanning authenticated pages
 
 Need to scan a page behind login? Two options:
@@ -169,7 +204,7 @@ tests/
 ├── e2e/            End-to-end test specs
 └── visual/         Visual regression specs
 
-docs/               Local documentation (18 guides, gitignored)
+docs/               Local documentation (20 guides, gitignored)
 ```
 
 Dependencies flow **down** only. Tests → Fixtures → Pages → Components → Core → Config.
@@ -263,7 +298,7 @@ Environments are defined in `src/config/env.config.ts` with per-env timeouts, re
 
 ## Documentation
 
-The scaffolded project includes 18 local documentation guides in `docs/` (gitignored). They cover everything from architecture to best practices, written for developers new to the framework.
+The scaffolded project includes 20 local documentation guides in `docs/` (gitignored). They cover everything from architecture to best practices, written for developers new to the framework.
 
 Open `docs/00-index.md` in VS Code or Obsidian to browse them.
 
