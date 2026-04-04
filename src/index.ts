@@ -89,6 +89,16 @@ function printUsage(): void {
   console.log();
 }
 
+function printExtractUsage(): void {
+  console.log(kleur.red("\n  Usage: histrion extract '<html_element>'"));
+  console.log();
+  console.log(kleur.bold("  Tip:"), "Multiline HTML from Chrome DevTools? Pipe from clipboard:");
+  console.log(kleur.dim("    pbpaste | npx histrion extract"), kleur.dim("          # macOS"));
+  console.log(kleur.dim("    xclip -selection clipboard -o | npx histrion extract"), kleur.dim(" # Linux"));
+  console.log(kleur.dim("    powershell Get-Clipboard | npx histrion extract"), kleur.dim("  # Windows"));
+  console.log();
+}
+
 async function main(): Promise<void> {
   const args = process.argv.slice(2);
 
@@ -96,7 +106,7 @@ async function main(): Promise<void> {
   if (args[0] === "extract") {
     const htmlArg = args.slice(1).join(" ");
 
-    // Support piped input: echo '<div>' | npx histrion extract
+    // Support piped input: pbpaste | npx histrion extract
     if (!htmlArg && !process.stdin.isTTY) {
       const chunks: Buffer[] = [];
       for await (const chunk of process.stdin) {
@@ -104,8 +114,7 @@ async function main(): Promise<void> {
       }
       const piped = Buffer.concat(chunks).toString("utf-8").trim();
       if (!piped) {
-        console.log(kleur.red("\n  Usage: histrion extract '<html_element>'"));
-        console.log(kleur.dim("  Example: histrion extract '<button id=\"login\">Sign In</button>'\n"));
+        printExtractUsage();
         process.exit(1);
       }
       extract(piped);
@@ -113,8 +122,7 @@ async function main(): Promise<void> {
     }
 
     if (!htmlArg) {
-      console.log(kleur.red("\n  Usage: histrion extract '<html_element>'"));
-      console.log(kleur.dim("  Example: histrion extract '<button id=\"login\">Sign In</button>'\n"));
+      printExtractUsage();
       process.exit(1);
     }
     extract(htmlArg);
